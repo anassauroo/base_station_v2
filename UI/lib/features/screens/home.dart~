@@ -1,0 +1,120 @@
+import 'dart:convert';
+
+import 'package:base_station_v2/features/hotspot_manager/presentation/wifi_card.dart';
+import 'package:base_station_v2/features/screens/widgets/camera_grid.dart';
+import 'package:base_station_v2/features/stream_manager/StreamManager.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  List<Widget> streams = [];
+  String activeStreamsString = "";
+
+
+
+  @override
+  void initState() {
+    super.initState();
+    refresh();
+  }
+
+  Future<void> refresh()async{
+
+
+    var tmp = await fetchConnections();
+
+    String streamsNames = tmp.items.map((e) => "${e.id}-${e.path}-state:${e.state}").join(",");
+
+    if (streamsNames == activeStreamsString) {
+      await Future.delayed(const Duration(milliseconds: 1000));
+      print("nothing to update");
+      return refresh();
+    } else {
+      print("update");
+      activeStreamsString = streamsNames;
+      streams = [];
+      setState(() {
+
+      });
+
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      streams = tmp.items.where((e) => e.path != "").map((e) => Container(child: InAppWebView(initialUrlRequest: URLRequest(url: WebUri("http:/localhost:8889/${e.path}"))))).toList();
+      //streams.addAll(tmp);
+      print(streams.length);
+      setState(() {
+
+      });
+      await Future.delayed(const Duration(milliseconds: 1000));
+      refresh();
+    }
+
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+
+          SizedBox(
+            height: MediaQuery.of(context).size.height,
+            width: double.maxFinite,
+            child:
+                streams.length > 1 ?Center(child: CameraGrid(streams: streams)): streams.length <=0?Container(): streams[0],
+
+          ),
+          Row(
+              children: [
+                SizedBox(child: FittedBox(child: WifiCard(),fit: BoxFit.scaleDown,), width: 125,),
+                // IconButton(onPressed: ()async{
+                //   var tmp = streams;
+                //   streams = [];
+                //   setState(() {
+                //
+                //   });
+                //
+                //   await Future.delayed(const Duration(milliseconds: 500));
+                //
+                //   tmp.add(Container(
+                //       child: InAppWebView(initialUrlRequest: URLRequest(url: WebUri("https://www.google.com")))));
+                //   streams.addAll(tmp);
+                //   setState(() {
+                //
+                //   });
+                //
+                // }, icon:  Icon(Icons.add)),
+                //
+                // IconButton(onPressed: ()async{
+                //   var tmp = streams;
+                //   streams = [];
+                //   setState(() {
+                //
+                //   });
+                //
+                //   await Future.delayed(const Duration(milliseconds: 500));
+                //
+                //   tmp.removeLast();
+                //   streams.addAll(tmp);
+                //   setState(() {
+                //
+                //   });
+                //
+                // }, icon:  Icon(Icons.remove))
+                //
+
+
+
+
+              ]),
+      ]),
+    );
+  }
+}
